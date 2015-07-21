@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type Image struct {
+	Url, Title, Link string
+	Width, Height    int
+}
+
 type Link struct {
 	Href, Rel string
 }
@@ -22,6 +27,7 @@ type Item struct {
 	Id          string // used as guid in rss, id in atom
 	Updated     time.Time
 	Created     time.Time
+	Image       *Image
 }
 
 type Feed struct {
@@ -35,6 +41,7 @@ type Feed struct {
 	Subtitle    string
 	Items       []*Item
 	Copyright   string
+	Image       *Image
 }
 
 // add a new Item to a Feed

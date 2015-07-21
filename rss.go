@@ -14,6 +14,7 @@ import (
 type rssFeedXml struct {
 	XMLName xml.Name `xml:"rss"`
 	Version string   `xml:"version,attr"`
+	Xmlns   string   `xml:"xmlns:media,attr"`
 	Channel *RssFeed
 }
 
@@ -24,6 +25,15 @@ type RssImage struct {
 	Link    string   `xml:"link"`
 	Width   int      `xml:"width,omitempty"`
 	Height  int      `xml:"height,omitempty"`
+}
+
+type RssMedia struct {
+	XMLName xml.Name `xml:"media:content"`
+	Medium  string   `xml:"medium,attr"`
+	Url     string   `xml:"url,attr"`
+	Width   int      `xml:"width,attr,omitempty"`
+	Height  int      `xml:"height,attr,omitempty"`
+	Title   string   `xml:"title,omitempty"`
 }
 
 type RssTextInput struct {
@@ -70,6 +80,7 @@ type RssItem struct {
 	Guid        string `xml:"guid,omitempty"`    // Id used
 	PubDate     string `xml:"pubDate,omitempty"` // created or updated
 	Source      string `xml:"source,omitempty"`
+	Image       *RssMedia
 }
 
 type RssEnclosure struct {
@@ -83,6 +94,30 @@ type Rss struct {
 	*Feed
 }
 
+// create a new RssImage with a generic Image struct's data
+func newRssImage(i *Image) *RssImage {
+	image := &RssImage{
+		Url:    i.Url,
+		Title:  i.Title,
+		Link:   i.Link,
+		Width:  i.Width,
+		Height: i.Height,
+	}
+	return image
+}
+
+// create a new RssImage with a generic Image struct's data
+func newRssMediaImage(i *Image) *RssMedia {
+	image := &RssMedia{
+		Medium: "image",
+		Url:    i.Url,
+		Title:  i.Title,
+		Width:  i.Width,
+		Height: i.Height,
+	}
+	return image
+}
+
 // create a new RssItem with a generic Item struct's data
 func newRssItem(i *Item) *RssItem {
 	item := &RssItem{
@@ -90,18 +125,21 @@ func newRssItem(i *Item) *RssItem {
 		Link:        i.Link.Href,
 		Description: i.Description,
 		Guid:        i.Id,
-		PubDate:     anyTimeFormat(time.RFC822, i.Created, i.Updated),
+		PubDate:     anyTimeFormat(time.RFC1123, i.Created, i.Updated),
 	}
 	if i.Author != nil {
 		item.Author = i.Author.Name
+	}
+	if i.Image != nil {
+		item.Image = newRssMediaImage(i.Image)
 	}
 	return item
 }
 
 // create a new RssFeed with a generic Feed struct's data
 func (r *Rss) RssFeed() *RssFeed {
-	pub := anyTimeFormat(time.RFC822, r.Created, r.Updated)
-	build := anyTimeFormat(time.RFC822, r.Updated)
+	pub := anyTimeFormat(time.RFC1123, r.Created, r.Updated)
+	build := anyTimeFormat(time.RFC1123, r.Updated)
 	author := ""
 	if r.Author != nil {
 		author = r.Author.Email
@@ -119,6 +157,9 @@ func (r *Rss) RssFeed() *RssFeed {
 		LastBuildDate:  build,
 		Copyright:      r.Copyright,
 	}
+	if r.Image != nil {
+		channel.Image = newRssImage(r.Image)
+	}
 	for _, i := range r.Items {
 		channel.Items = append(channel.Items, newRssItem(i))
 	}
@@ -134,5 +175,5 @@ func (r *Rss) FeedXml() interface{} {
 
 // return an XML-ready object for an RssFeed object
 func (r *RssFeed) FeedXml() interface{} {
-	return &rssFeedXml{Version: "2.0", Channel: r}
+	return &rssFeedXml{Version: "2.0", Xmlns: "http://search.yahoo.com/mrss/", Channel: r}
 }
