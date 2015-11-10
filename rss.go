@@ -155,7 +155,7 @@ func newRssItem(i *Item) *RssItem {
 
 // create a new RssFeed with a generic Feed struct's data
 func (r *Rss) RssFeed() *RssFeed {
-	pub := anyTimeFormat(time.RFC1123, r.Created, r.Updated)
+	pub := anyTimeFormat(time.RFC1123, r.Created)
 	build := anyTimeFormat(time.RFC1123, r.Updated)
 	author := ""
 	if r.Author != nil {
