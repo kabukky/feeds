@@ -12,10 +12,25 @@ import (
 
 // private wrapper around the RssFeed which gives us the <rss>..</rss> xml
 type rssFeedXml struct {
-	XMLName xml.Name `xml:"rss"`
-	Version string   `xml:"version,attr"`
-	Xmlns   string   `xml:"xmlns:media,attr"`
-	Channel *RssFeed
+	XMLName    xml.Name `xml:"rss"`
+	Version    string   `xml:"version,attr"`
+	XmlnsMedia string   `xml:"xmlns:media,attr"`
+	XmlnsDc    string   `xml:"xmlns:dc,attr"`
+	XmlnsAtom  string   `xml:"xmlns:atom,attr"`
+	Channel    *RssFeed
+}
+
+type RssAtomLink struct {
+	XMLName xml.Name `xml:"atom:link"`
+	Href    string   `xml:"href,attr"`
+	Rel     string   `xml:"rel,attr"`
+	Type    string   `xml:"type,attr"`
+}
+
+type RssGuid struct {
+	XMLName     xml.Name `xml:"guid"`
+	IsPermaLink bool     `xml:"isPermaLink,attr"`
+	Value       string   `xml:",innerxml"`
 }
 
 type RssImage struct {
@@ -33,7 +48,6 @@ type RssMedia struct {
 	Url     string   `xml:"url,attr"`
 	Width   int      `xml:"width,attr,omitempty"`
 	Height  int      `xml:"height,attr,omitempty"`
-	Title   string   `xml:"title,omitempty"`
 }
 
 type RssTextInput struct {
@@ -46,23 +60,24 @@ type RssTextInput struct {
 
 type RssFeed struct {
 	XMLName        xml.Name `xml:"channel"`
-	Title          string   `xml:"title"`       // required
-	Link           string   `xml:"link"`        // required
-	Description    string   `xml:"description"` // required
-	Language       string   `xml:"language,omitempty"`
-	Copyright      string   `xml:"copyright,omitempty"`
-	ManagingEditor string   `xml:"managingEditor,omitempty"` // Author used
-	WebMaster      string   `xml:"webMaster,omitempty"`
-	PubDate        string   `xml:"pubDate,omitempty"`       // created or updated
-	LastBuildDate  string   `xml:"lastBuildDate,omitempty"` // updated used
-	Category       string   `xml:"category,omitempty"`
-	Generator      string   `xml:"generator,omitempty"`
-	Docs           string   `xml:"docs,omitempty"`
-	Cloud          string   `xml:"cloud,omitempty"`
-	Ttl            int      `xml:"ttl,omitempty"`
-	Rating         string   `xml:"rating,omitempty"`
-	SkipHours      string   `xml:"skipHours,omitempty"`
-	SkipDays       string   `xml:"skipDays,omitempty"`
+	AtomLink       *RssAtomLink
+	Title          string `xml:"title"`       // required
+	Link           string `xml:"link"`        // required
+	Description    string `xml:"description"` // required
+	Language       string `xml:"language,omitempty"`
+	Copyright      string `xml:"copyright,omitempty"`
+	ManagingEditor string `xml:"managingEditor,omitempty"` // Author used
+	WebMaster      string `xml:"webMaster,omitempty"`
+	PubDate        string `xml:"pubDate,omitempty"`       // created or updated
+	LastBuildDate  string `xml:"lastBuildDate,omitempty"` // updated used
+	Category       string `xml:"category,omitempty"`
+	Generator      string `xml:"generator,omitempty"`
+	Docs           string `xml:"docs,omitempty"`
+	Cloud          string `xml:"cloud,omitempty"`
+	Ttl            int    `xml:"ttl,omitempty"`
+	Rating         string `xml:"rating,omitempty"`
+	SkipHours      string `xml:"skipHours,omitempty"`
+	SkipDays       string `xml:"skipDays,omitempty"`
 	Image          *RssImage
 	TextInput      *RssTextInput
 	Items          []*RssItem
@@ -73,13 +88,13 @@ type RssItem struct {
 	Title       string   `xml:"title"`       // required
 	Link        string   `xml:"link"`        // required
 	Description string   `xml:"description"` // required
-	Author      string   `xml:"author,omitempty"`
+	Author      string   `xml:"dc:creator,omitempty"`
 	Category    string   `xml:"category,omitempty"`
 	Comments    string   `xml:"comments,omitempty"`
 	Enclosure   *RssEnclosure
-	Guid        string `xml:"guid,omitempty"`    // Id used
-	PubDate     string `xml:"pubDate,omitempty"` // created or updated
-	Source      string `xml:"source,omitempty"`
+	Guid        *RssGuid // Id used
+	PubDate     string   `xml:"pubDate,omitempty"` // created or updated
+	Source      string   `xml:"source,omitempty"`
 	Image       *RssMedia
 }
 
@@ -111,7 +126,6 @@ func newRssMediaImage(i *Image) *RssMedia {
 	image := &RssMedia{
 		Medium: "image",
 		Url:    i.Url,
-		Title:  i.Title,
 		Width:  i.Width,
 		Height: i.Height,
 	}
@@ -124,8 +138,11 @@ func newRssItem(i *Item) *RssItem {
 		Title:       i.Title,
 		Link:        i.Link.Href,
 		Description: i.Description,
-		Guid:        i.Id,
-		PubDate:     anyTimeFormat(time.RFC1123, i.Created, i.Updated),
+		Guid: &RssGuid{
+			IsPermaLink: false,
+			Value:       i.Id,
+		},
+		PubDate: anyTimeFormat(time.RFC1123, i.Created, i.Updated),
 	}
 	if i.Author != nil {
 		item.Author = i.Author.Name
@@ -149,6 +166,11 @@ func (r *Rss) RssFeed() *RssFeed {
 	}
 
 	channel := &RssFeed{
+		AtomLink: &RssAtomLink{
+			Href: r.Url,
+			Rel:  "self",
+			Type: "application/rss+xml",
+		},
 		Title:          r.Title,
 		Link:           r.Link.Href,
 		Description:    r.Description,
@@ -175,5 +197,5 @@ func (r *Rss) FeedXml() interface{} {
 
 // return an XML-ready object for an RssFeed object
 func (r *RssFeed) FeedXml() interface{} {
-	return &rssFeedXml{Version: "2.0", Xmlns: "http://search.yahoo.com/mrss/", Channel: r}
+	return &rssFeedXml{Version: "2.0", XmlnsMedia: "http://search.yahoo.com/mrss/", XmlnsDc: "http://purl.org/dc/elements/1.1/", XmlnsAtom: "http://www.w3.org/2005/Atom", Channel: r}
 }

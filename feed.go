@@ -42,6 +42,7 @@ type Feed struct {
 	Items       []*Item
 	Copyright   string
 	Image       *Image
+	Url         string
 }
 
 // add a new Item to a Feed
@@ -82,7 +83,7 @@ func ToXML(feed XmlFeed) (string, error) {
 func WriteXML(feed XmlFeed, w io.Writer) error {
 	x := feed.FeedXml()
 	// write default xml header, without the newline
-	if _, err := w.Write([]byte(xml.Header[:len(xml.Header)-1])); err != nil {
+	if _, err := w.Write([]byte(xml.Header)); err != nil {
 		return err
 	}
 	e := xml.NewEncoder(w)
