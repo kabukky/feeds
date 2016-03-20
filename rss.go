@@ -142,7 +142,7 @@ func newRssItem(i *Item) *RssItem {
 			IsPermaLink: false,
 			Value:       i.Id,
 		},
-		PubDate: anyTimeFormat(time.RFC1123, i.Created, i.Updated),
+		PubDate: anyTimeFormat(time.RFC1123Z, i.Created, i.Updated),
 	}
 	if i.Author != nil {
 		item.Author = i.Author.Name
@@ -155,8 +155,8 @@ func newRssItem(i *Item) *RssItem {
 
 // create a new RssFeed with a generic Feed struct's data
 func (r *Rss) RssFeed() *RssFeed {
-	pub := anyTimeFormat(time.RFC1123, r.Created)
-	build := anyTimeFormat(time.RFC1123, r.Updated)
+	pub := anyTimeFormat(time.RFC1123Z, r.Created)
+	build := anyTimeFormat(time.RFC1123Z, r.Updated)
 	author := ""
 	if r.Author != nil {
 		author = r.Author.Email
