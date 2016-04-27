@@ -3,7 +3,6 @@ package feeds
 import (
 	"encoding/xml"
 	"io"
-	"strings"
 	"time"
 )
 
@@ -55,9 +54,7 @@ func (f *Feed) Add(item *Item) {
 func anyTimeFormat(format string, times ...time.Time) string {
 	for _, t := range times {
 		if !t.IsZero() {
-			// Always return GMT time by converting to UTC and then replacing UTC with GMT in the output string (RSS doesn't allow UTC)
-			timeFormatted := t.UTC().Format(format)
-			return strings.Replace(timeFormatted, "UTC", "GMT", -1)
+			return t.Format(format)
 		}
 	}
 	return ""
